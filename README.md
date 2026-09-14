@@ -23,7 +23,7 @@ straight into whatever app you were using.
 ### Homebrew (once published — see [Distribution](#distribution))
 
 ```sh
-brew tap GITHUB_USER/snipsnap
+brew tap rushabhdharia/snipsnap
 brew install --cask snipsnap
 ```
 
@@ -85,24 +85,26 @@ doesn't set the browser quarantine flag the way Safari does, and the cask's
 `postflight` block clears it explicitly either way, so `brew install --cask`
 just works.
 
-To cut a release:
+Published at [github.com/rushabhdharia/SnipSnap](https://github.com/rushabhdharia/SnipSnap),
+with the tap at [github.com/rushabhdharia/homebrew-snipsnap](https://github.com/rushabhdharia/homebrew-snipsnap).
+
+To cut a new release:
 
 ```sh
-./release.sh 1.0.0
+./release.sh 1.1.0
 ```
 
 This builds, bundles, ad-hoc signs, and zips the app to
-`dist/SnipSnap-1.0.0.zip`, printing its sha256. Then:
+`dist/SnipSnap-1.1.0.zip`, printing its sha256. Then:
 
-1. Push this repo to GitHub, tag `v1.0.0`, and attach the zip as a release
-   asset.
-2. In a separate `homebrew-snipsnap` repo (a `Casks/snipsnap.rb` formula
-   — see the tap skeleton alongside this project), set `version`, `sha256`,
-   and the `GITHUB_USER` placeholders in the `url`/`homepage` lines to match.
-3. Push that repo too. Anyone can then run the Homebrew install command
-   above.
-
-Bumping the version later is the same three steps with a new tag.
+1. Push this repo, tag `v1.1.0`, and attach the zip as a release asset:
+   ```sh
+   git tag v1.1.0 && git push origin v1.1.0
+   gh release create v1.1.0 dist/SnipSnap-1.1.0.zip --title v1.1.0 --notes "..."
+   ```
+2. In the `homebrew-snipsnap` repo, bump `version` and `sha256` in
+   `Casks/snipsnap.rb` to match, then push. Anyone running
+   `brew upgrade --cask snipsnap` picks it up.
 
 If this ever gets wide, non-technical distribution, upgrading to a real
 Developer ID + notarized build removes the need for the `postflight`
