@@ -1,9 +1,10 @@
 import AppKit
 import SwiftUI
+import ServiceManagement
 
 /// Wires the four subsystems together and owns the menu bar item.
 @MainActor
-public final class AppDelegate: NSObject, NSApplicationDelegate {
+public final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     public override init() { super.init() }
 
@@ -15,6 +16,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var panel = PanelController(store: store, paster: paster)
 
     private var statusItem: NSStatusItem?
+    private var launchAtLoginItem: NSMenuItem?
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -44,6 +46,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         let menu = NSMenu()
+        menu.delegate = self
 
         let show = NSMenuItem(
             title: "Show SnipSnap",
@@ -53,6 +56,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         show.keyEquivalentModifierMask = [.command, .control]
         show.target = self
         menu.addItem(show)
+
+        menu.addItem(.separator())
+
+        let launchAtLogin = NSMenuItem(
+            title: "Launch at Login",
+            action: #selector(toggleLaunchAtLogin),
+            keyEquivalent: ""
+        )
+        launchAtLogin.target = self
+        menu.addItem(launchAtLogin)
+        launchAtLoginItem = launchAtLogin
 
         menu.addItem(.separator())
 
@@ -77,6 +91,27 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = item
     }
 
+
+    // MARK: - Launch at Login
+
+    /// Reflects the real `SMAppService` status rather than a cached flag, so
+    /// this stays correct even if the user disables it from System
+    /// Settings ▸ General ▸ Login Items instead of this menu.
+    public func menuNeedsUpdate(_ menu: NSMenu) {
+        launchAtLoginItem?.state = SMAppService.mainApp.status == .enabled ? .on : .off
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        do {
+            if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            } else {
+                try SMAppService.mainApp.register()
+            }
+        } catch {
+            NSLog("SnipSnap: failed to toggle launch-at-login: \(error)")
+        }
+    }
 
     @objc private func showPanel() {
         panel.show()
